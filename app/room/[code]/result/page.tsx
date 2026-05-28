@@ -22,7 +22,9 @@ export default function RoomResultPage() {
     setMyUserId(localStorage.getItem("quizUserId"));
   }, []);
 
-  if (!room || !members) {
+  const isLoading = room === undefined || members === undefined;
+
+  if (isLoading) {
     return (
       <main className="min-h-screen flex items-center justify-center bg-[#050816] text-white">
         <div className="animate-pulse text-2xl">Loading results...</div>
@@ -30,8 +32,17 @@ export default function RoomResultPage() {
     );
   }
 
-  const winner = members[0];
-  const myResult = members.find((m) => m._id === myUserId);
+  if (!room) {
+    return (
+      <main className="min-h-screen flex items-center justify-center bg-[#050816] text-white">
+        <div className="text-xl text-white/60">Room not found.</div>
+      </main>
+    );
+  }
+
+  const winner = members[0] ?? null;
+  const myResult = members.find((m) => m._id === myUserId) ?? null;
+  const medals = ["🥇", "🥈", "🥉"];
 
   return (
     <main className="min-h-screen flex items-center justify-center bg-[#050816] text-white px-4 py-10">
@@ -39,48 +50,54 @@ export default function RoomResultPage() {
         <div className="text-center mb-8">
           <div className="text-5xl mb-3">🏆</div>
           <h1 className="text-4xl font-bold mb-2">Game Over!</h1>
-          {winner && (
+          {winner ? (
             <p className="text-white/60 text-lg">
               <span className="text-yellow-400 font-bold">{winner.name}</span> wins with{" "}
               <span className="font-bold">{winner.score}/10</span>!
             </p>
+          ) : (
+            <p className="text-white/40">No players found.</p>
           )}
         </div>
 
-        <div className="bg-white/10 p-6 rounded-2xl mb-6">
-          <h2 className="font-bold text-lg mb-4">Final Standings</h2>
-          <div className="space-y-3">
-            {members.map((member, i) => {
-              const isMe = member._id === myUserId;
-              const medals = ["🥇", "🥈", "🥉"];
-              return (
-                <div
-                  key={member._id}
-                  className={`flex items-center gap-3 p-4 rounded-xl border ${
-                    isMe
-                      ? "bg-purple-600/30 border-purple-400/50"
-                      : i === 0
-                      ? "bg-yellow-500/10 border-yellow-400/30"
-                      : "bg-black/30 border-white/10"
-                  }`}
-                >
-                  <span className="text-xl w-8 text-center">
-                    {medals[i] ?? `${i + 1}.`}
-                  </span>
-                  <span className="flex-1 font-medium">
-                    {member.name}
-                    {isMe && <span className="text-purple-300 text-xs ml-2">(you)</span>}
-                  </span>
-                  <span className="font-bold text-lg">{member.score}/10</span>
-                </div>
-              );
-            })}
+        {members.length > 0 && (
+          <div className="bg-white/10 p-6 rounded-2xl mb-6">
+            <h2 className="font-bold text-lg mb-4">Final Standings</h2>
+            <div className="space-y-3">
+              {members.map((member, i) => {
+                const isMe = member._id === myUserId;
+                return (
+                  <div
+                    key={member._id}
+                    className={`flex items-center gap-3 p-4 rounded-xl border ${
+                      isMe
+                        ? "bg-purple-600/30 border-purple-400/50"
+                        : i === 0
+                        ? "bg-yellow-500/10 border-yellow-400/30"
+                        : "bg-black/30 border-white/10"
+                    }`}
+                  >
+                    <span className="text-xl w-8 text-center">
+                      {medals[i] ?? `${i + 1}.`}
+                    </span>
+                    <span className="flex-1 font-medium">
+                      {member.name}
+                      {isMe && (
+                        <span className="text-purple-300 text-xs ml-2">(you)</span>
+                      )}
+                    </span>
+                    <span className="font-bold text-lg">{member.score}/10</span>
+                  </div>
+                );
+              })}
+            </div>
           </div>
-        </div>
+        )}
 
         {myResult && (
           <div className="bg-white/5 p-4 rounded-xl text-center mb-6 text-white/60 text-sm">
-            Your score: <span className="text-white font-bold">{myResult.score}/10</span>
+            Your score:{" "}
+            <span className="text-white font-bold">{myResult.score}/10</span>
             {" · "}
             {Math.round((myResult.score / 10) * 100)}% correct
           </div>

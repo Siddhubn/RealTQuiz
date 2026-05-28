@@ -27,7 +27,6 @@ export default function QuizPage() {
 
   const submitAnswer = useMutation(api.questions.submitAnswer);
   const markFinished = useMutation(api.users.markFinished);
-  const finishRoom = useMutation(api.rooms.finishRoom);
 
   const [timeLeft, setTimeLeft] = useState(TIMER_SECONDS);
   const [selected, setSelected] = useState(false);
@@ -37,8 +36,6 @@ export default function QuizPage() {
   const selectedRef = useRef(false);
   const quizDataRef = useRef(quizData);
   quizDataRef.current = quizData;
-  const userRef = useRef(user);
-  userRef.current = user;
 
   const showingFeedbackRef = useRef(false);
   const lastQuestionIndexRef = useRef<number | undefined>(undefined);
@@ -57,20 +54,21 @@ export default function QuizPage() {
 
     const finish = async () => {
       await markFinished({ userId: userId as any });
-      const u = userRef.current;
-      if (u?.roomId && u?.mode === "multi") {
-        const members = roomMembers;
-        const allDone = members?.every((m) => m.completed);
-        if (allDone) {
-          await finishRoom({ roomId: u.roomId });
+
+      if (user?.mode === "multi") {
+        const roomCode = localStorage.getItem("quizRoomCode");
+        if (roomCode) {
+          router.push(`/room/${roomCode}/result`);
+        } else {
+          router.push("/");
         }
-        router.push(`/room/${localStorage.getItem("quizRoomCode") ?? ""}/result`);
       } else {
         router.push(`/result/${userId}`);
       }
     };
+
     finish();
-  }, [quizData?.completed]);
+  }, [quizData?.completed, userId, user?.mode, markFinished, router]);
 
   useEffect(() => {
     const currentIndex = quizData?.currentQuestionIndex;
@@ -275,7 +273,7 @@ export default function QuizPage() {
                           {i === 0 ? "👑" : `${i + 1}.`}
                         </span>
                         <span className="flex-1 text-sm font-medium truncate">
-                          {member.name} {isMe && <span className="text-purple-300 text-xs">(you)</span>}
+                          {member.name}{isMe && <span className="text-purple-300 text-xs ml-1">(you)</span>}
                         </span>
                         <span className="text-sm font-bold">{member.score}</span>
                       </div>

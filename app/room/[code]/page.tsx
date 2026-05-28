@@ -18,11 +18,9 @@ export default function RoomLobby() {
   const startRoom = useMutation(api.rooms.startRoom);
 
   const [userId, setUserId] = useState<string | null>(null);
-  const [roomId, setRoomId] = useState<string | null>(null);
 
   useEffect(() => {
     setUserId(localStorage.getItem("quizUserId"));
-    setRoomId(localStorage.getItem("quizRoomId"));
   }, []);
 
   useEffect(() => {
@@ -31,20 +29,28 @@ export default function RoomLobby() {
     }
   }, [room?.status, userId, router]);
 
-  const isHost = room && userId && room.hostUserId === userId;
-
   const handleStart = async () => {
     if (!room) return;
     await startRoom({ roomId: room._id });
   };
 
-  if (!room) {
+  if (room === undefined) {
     return (
       <main className="min-h-screen flex items-center justify-center bg-[#050816] text-white">
         <div className="animate-pulse text-2xl">Loading room...</div>
       </main>
     );
   }
+
+  if (room === null) {
+    return (
+      <main className="min-h-screen flex items-center justify-center bg-[#050816] text-white">
+        <div className="text-xl text-white/60">Room not found.</div>
+      </main>
+    );
+  }
+
+  const isHost = userId && room.hostUserId === userId;
 
   return (
     <main className="min-h-screen flex items-center justify-center bg-[#050816] text-white px-4">
