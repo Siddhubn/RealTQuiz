@@ -1,25 +1,22 @@
-import {mutation,query} from "./_generated/server";
+import {mutation, query} from "./_generated/server";
 import {v} from "convex/values";
 
-// Question Generation Mutation
-export const generateQuizQuestions=mutation({
-    args:{
-        userId: v.id("users"),
-        questions: v.array(
-            v.object({
-                question: v.string(),
-                options: v.array(v.string()),
-                correctAnswer: v.string(),
-        })
-        ),
+export const generateQuizQuestions = mutation({
+    args: {
+        userId: v.optional(v.id("users")),
+        roomId: v.optional(v.id("rooms")),
+        questions: v.array(v.object({
+            question: v.string(),
+            options: v.array(v.string()),
+            correctAnswer: v.string(),
+        })),
     },
-
-    handler: async (convexToJson, args)=>{
-        for(let i=0;i<args.questions.length;i++){
-            const q=args.questions[i];
-
-            await convexToJson.db.insert("questions",{
+    handler: async (ctx, args) => {
+        for (let i = 0; i < args.questions.length; i++) {
+            const q = args.questions[i];
+            await ctx.db.insert("questions", {
                 userId: args.userId,
+                roomId: args.roomId,
                 question: q.question,
                 options: q.options,
                 correctAnswer: q.correctAnswer,
@@ -27,59 +24,40 @@ export const generateQuizQuestions=mutation({
             });
         }
         return true;
-        }
-    }
-)
-
-// Query to Fetch Current Question
-export const getCurrentQuestion = query({
-  args: {
-    userId: v.id("users"),
-  },
-
-  handler: async (ctx, args) => {
-    const user = await ctx.db.get(args.userId);
-
-    if (!user) {
-      return null;
-    }
-
-    const questions = await ctx.db
-      .query("questions")
-      .filter((q) =>
-        q.eq(
-          q.field("userId"),
-          args.userId
-        )
-      )
-      .collect();
-
-    const sortedQuestions =
-      questions.sort(
-        (a, b) =>
-          a.questionNumber -
-          b.questionNumber
-      );
-
-    const currentQuestion =
-      sortedQuestions[
-        user.currentQuestion
-      ];
-
-    return {
-      question: currentQuestion || null,
-
-      currentQuestionIndex:
-        user.currentQuestion,
-
-      score: user.score,
-
-      completed: user.completed,
-    };
-  },
+    },
 });
 
-// Answer Submission Mutation
+export const getCurrentQuestion = query({
+    args: { userId: v.id("users") },
+    handler: async (ctx, args) => {
+        const user = await ctx.db.get(args.userId);
+        if (!user) return null;
+
+        let questions;
+        if (user.roomId) {
+            questions = await ctx.db
+                .query("questions")
+                .filter((q) => q.eq(q.field("roomId"), user.roomId))
+                .collect();
+        } else {
+            questions = await ctx.db
+                .query("questions")
+                .filter((q) => q.eq(q.field("userId"), args.userId))
+                .collect();
+        }
+
+        const sorted = questions.sort((a, b) => a.questionNumber - b.questionNumber);
+        const currentQuestion = sorted[user.currentQuestion] || null;
+
+        return {
+            question: currentQuestion,
+            currentQuestionIndex: user.currentQuestion,
+            score: user.score,
+            completed: user.completed,
+        };
+    },
+});
+
 export const submitAnswer = mutation({
     args: {
         userId: v.id("users"),
@@ -88,50 +66,41 @@ export const submitAnswer = mutation({
     },
     handler: async (ctx, args) => {
         const user = await ctx.db.get(args.userId);
-
-        if(!user){
-            throw new Error("User not found");
-        }
+        if (!user) throw new Error("User not found");
 
         const question = await ctx.db.get(args.questionId);
-
-        if(!question){
-            throw new Error("Question not found");
-        }
+        if (!question) throw new Error("Question not found");
 
         const alreadyAnswered = await ctx.db
             .query("attempts")
-            .filter((q)=>
-                q.eq(q.field("questionId"),args.questionId)
-            )
+            .filter((q) => q.and(
+                q.eq(q.field("userId"), args.userId),
+                q.eq(q.field("questionId"), args.questionId)
+            ))
             .first();
-        
-            if(alreadyAnswered){
-                throw new Error("Already answered");
-            }
 
-            const isCorrect = question.correctAnswer === args.selectedAnswer;
+        if (alreadyAnswered) {
+            return { correct: alreadyAnswered.isCorrect, correctAnswer: question.correctAnswer };
+        }
 
-            await ctx.db.insert("attempts",{
-                userId: args.userId,
-                questionId: args.questionId,
-                selectedAnswer: args.selectedAnswer,
-                isCorrect,
-            });
+        const isCorrect = question.correctAnswer === args.selectedAnswer;
 
-            await ctx.db.patch(args.userId,{
-                score: isCorrect
-                ? user.score+1
-                : user.score,
+        await ctx.db.insert("attempts", {
+            userId: args.userId,
+            questionId: args.questionId,
+            selectedAnswer: args.selectedAnswer,
+            isCorrect,
+        });
 
-                currentQuestion: user.currentQuestion+1,
+        const newCurrentQuestion = user.currentQuestion + 1;
+        const completed = newCurrentQuestion >= 10;
 
-                completed: user.currentQuestion+1>=10,
-            });
-            return {
-                correct: isCorrect,
-                correctAnswer: question.correctAnswer,
-            };
+        await ctx.db.patch(args.userId, {
+            score: isCorrect ? user.score + 1 : user.score,
+            currentQuestion: newCurrentQuestion,
+            completed,
+        });
+
+        return { correct: isCorrect, correctAnswer: question.correctAnswer };
     },
 });
-
