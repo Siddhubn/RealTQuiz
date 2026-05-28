@@ -42,13 +42,6 @@ export default function QuizPage() {
   const finishedRef = useRef(false);
 
   useEffect(() => {
-    const savedUser = localStorage.getItem("quizUserId");
-    if (savedUser && savedUser !== userId) {
-      router.push("/");
-    }
-  }, [userId, router]);
-
-  useEffect(() => {
     if (!quizData?.completed || finishedRef.current) return;
     finishedRef.current = true;
 
@@ -141,6 +134,14 @@ export default function QuizPage() {
     return (
       <main className="min-h-screen flex items-center justify-center bg-[#050816] text-white">
         <div className="animate-pulse text-2xl">Loading Quiz...</div>
+      </main>
+    );
+  }
+
+  if (quizData.waiting) {
+    return (
+      <main className="min-h-screen flex items-center justify-center bg-[#050816] text-white">
+        <div className="animate-pulse text-2xl">Preparing questions...</div>
       </main>
     );
   }

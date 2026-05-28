@@ -34,11 +34,22 @@ export const getCurrentQuestion = query({
         if (!user) return null;
 
         let questions;
+
         if (user.roomId) {
             questions = await ctx.db
                 .query("questions")
                 .filter((q) => q.eq(q.field("roomId"), user.roomId))
                 .collect();
+
+            if (questions.length === 0) {
+                return {
+                    question: null,
+                    currentQuestionIndex: user.currentQuestion,
+                    score: user.score,
+                    completed: user.completed,
+                    waiting: true,
+                };
+            }
         } else {
             questions = await ctx.db
                 .query("questions")
@@ -54,6 +65,7 @@ export const getCurrentQuestion = query({
             currentQuestionIndex: user.currentQuestion,
             score: user.score,
             completed: user.completed,
+            waiting: false,
         };
     },
 });

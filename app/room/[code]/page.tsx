@@ -2,7 +2,7 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useMutation, useQuery } from "convex/react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { api } from "@/convex/_generated/api";
 
 export default function RoomLobby() {
@@ -18,19 +18,24 @@ export default function RoomLobby() {
   const startRoom = useMutation(api.rooms.startRoom);
 
   const [userId, setUserId] = useState<string | null>(null);
+  const redirectedRef = useRef(false);
 
   useEffect(() => {
-    setUserId(localStorage.getItem("quizUserId"));
+    const id = localStorage.getItem("quizUserId");
+    setUserId(id);
   }, []);
 
   useEffect(() => {
-    if (room?.status === "active" && userId) {
+    if (!userId) return;
+    if (redirectedRef.current) return;
+    if (room?.status === "active") {
+      redirectedRef.current = true;
       router.push(`/quiz/${userId}`);
     }
   }, [room?.status, userId, router]);
 
   const handleStart = async () => {
-    if (!room) return;
+    if (!room || !userId) return;
     await startRoom({ roomId: room._id });
   };
 
