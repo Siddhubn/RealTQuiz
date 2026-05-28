@@ -1,52 +1,56 @@
 "use client";
 
+import { useParams, useRouter } from "next/navigation";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 
-interface Props {
-  params: {
-    userId: string;
-  };
-}
+export default function ResultPage() {
+  const params = useParams();
+  const userId = params.userId as string;
+  const router = useRouter();
 
-export default function ResultPage({
-  params,
-}: Props) {
-  const user = useQuery(
-    api.users.getUser,
-    {
-      userId: params.userId as any,
-    }
-  );
+  const user = useQuery(api.users.getUser, {
+    userId: userId as any,
+  });
 
-  if (!user) {
+  if (user === undefined) {
     return (
-      <main className="min-h-screen flex items-center justify-center text-white">
-        Loading...
+      <main className="min-h-screen flex items-center justify-center bg-[#050816] text-white">
+        <div className="animate-pulse text-2xl">Loading...</div>
       </main>
     );
   }
 
+  if (user === null) {
+    return (
+      <main className="min-h-screen flex items-center justify-center bg-[#050816] text-white">
+        <div className="text-2xl">User not found.</div>
+      </main>
+    );
+  }
+
+  const percentage = Math.round((user.score / 10) * 100);
+  const message =
+    percentage >= 80
+      ? "Excellent work!"
+      : percentage >= 50
+      ? "Good effort!"
+      : "Keep practicing!";
+
   return (
     <main className="min-h-screen flex items-center justify-center bg-[#050816] text-white px-4">
       <div className="w-full max-w-xl bg-white/10 p-10 rounded-2xl text-center">
-        <h1 className="text-5xl font-bold mb-6">
-          Quiz Completed !
-        </h1>
+        <h1 className="text-5xl font-bold mb-6">Quiz Completed!</h1>
 
-        <p className="text-2xl mb-4">
-          {user.name}
-        </p>
+        <p className="text-2xl mb-2">{user.name}</p>
+        <p className="text-white/60 mb-8">{message}</p>
 
-        <div className="text-7xl font-bold mb-8">
-          {user.score}/10
-        </div>
+        <div className="text-7xl font-bold mb-4">{user.score}/10</div>
+        <p className="text-white/60 mb-10">{percentage}% correct</p>
 
         <button
-          onClick={() =>
-            window.location.href = "/"
-          }
-          className="bg-blue-600 hover:bg-blue-700 px-8 py-4 rounded-xl"
+          onClick={() => router.push("/")}
+          className="bg-blue-600 hover:bg-blue-700 transition-all px-8 py-4 rounded-xl font-semibold"
         >
           Play Again
         </button>
