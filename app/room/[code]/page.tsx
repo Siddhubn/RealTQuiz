@@ -35,8 +35,12 @@ export default function RoomLobby() {
   }, [room?.status, userId, router]);
 
   const handleStart = async () => {
-    if (!room || !userId) return;
+    if (!room) return;
+    const currentUserId = localStorage.getItem("quizUserId");
+    if (!currentUserId) return;
+    redirectedRef.current = true;
     await startRoom({ roomId: room._id });
+    router.push(`/quiz/${currentUserId}`);
   };
 
   if (room === undefined) {
