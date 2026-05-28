@@ -16,14 +16,14 @@ export const generateQuizQuestions=mutation({
 
     handler: async (convexToJson, args)=>{
         for(let i=0;i<args.questions.length;i++){
-            const q=args.questions[1];
+            const q=args.questions[i];
 
             await convexToJson.db.insert("questions",{
                 userId: args.userId,
                 question: q.question,
                 options: q.options,
                 correctAnswer: q.correctAnswer,
-                questionNumber: 1,
+                questionNumber: i + 1,
             });
         }
         return true;
