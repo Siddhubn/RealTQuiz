@@ -46,24 +46,25 @@ Requirements:
 - Medium difficulty
 - 4 options per question
 - One correct answer only
-- No explanations
-- No markdown
-- No extra text
+- No explanations, no markdown, no extra text
+- Each question must be SHORT: maximum 12 words
+- Each option must be SHORT: maximum 6 words
+- Questions must be clear and readable at a glance
 
-Return ONLY valid JSON array.
+Return ONLY a valid JSON array with no extra text before or after.
 
 Required format:
 
 [
   {
-    "question": "Question text",
+    "question": "Short question here?",
     "options": [
-      "Option 1",
-      "Option 2",
-      "Option 3",
-      "Option 4"
+      "Option A",
+      "Option B",
+      "Option C",
+      "Option D"
     ],
-    "correctAnswer": "Correct option"
+    "correctAnswer": "Option A"
   }
 ]
 `;
@@ -92,7 +93,31 @@ Required format:
       );
     }
 
-    return parsed;
+  const validQuestions =
+    parsed.filter(
+    (q: any) =>
+      q.question &&
+      Array.isArray(q.options) &&
+      q.options.length === 4 &&
+      q.correctAnswer
+    ).map((q: any) => ({
+      question: q.question.length > 120 ? q.question.slice(0, 117) + "..." : q.question,
+      options: q.options.map((o: string) =>
+        o.length > 60 ? o.slice(0, 57) + "..." : o
+      ),
+      correctAnswer: q.correctAnswer.length > 60 ? q.correctAnswer.slice(0, 57) + "..." : q.correctAnswer,
+    }));
+
+  if(
+    validQuestions.length < 10
+  ){
+    throw new Error(
+      "Not enough valid questions"
+    );
+  }
+
+  return validQuestions.slice(0, 10);
+
   } catch (error) {
     console.error(
       "Gemini Generation Error:",
