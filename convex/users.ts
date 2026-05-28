@@ -36,18 +36,30 @@ export const markFinished = mutation({
     handler: async (ctx, args) => {
         const user = await ctx.db.get(args.userId);
         if (!user) return;
+
+        if (user.finishedAt) return;
+
         const now = Date.now();
         await ctx.db.patch(args.userId, { finishedAt: now });
 
         if (user.mode === "single") {
-            const timeTaken = user.startedAt ? Math.round((now - user.startedAt) / 1000) : 0;
-            await ctx.db.insert("globalLeaderboard", {
-                userId: args.userId,
-                name: user.name,
-                score: user.score,
-                timeTaken,
-                completedAt: now,
-            });
+            const existing = await ctx.db
+                .query("globalLeaderboard")
+                .filter((q) => q.eq(q.field("userId"), args.userId))
+                .first();
+
+            if (!existing) {
+                const timeTaken = user.startedAt
+                    ? Math.round((now - user.startedAt) / 1000)
+                    : 0;
+                await ctx.db.insert("globalLeaderboard", {
+                    userId: args.userId,
+                    name: user.name,
+                    score: user.score,
+                    timeTaken,
+                    completedAt: now,
+                });
+            }
         }
     },
 });

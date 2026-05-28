@@ -1,13 +1,11 @@
-"use client";
-
+import type { Metadata } from "next";
 import "./globals.css";
+import ConvexClientProvider from "@/components/ConvexClientProvider";
 
-import { ConvexReactClient } from "convex/react";
-import { ConvexProvider } from "convex/react";
-
-const convex = new ConvexReactClient(
-  process.env.NEXT_PUBLIC_CONVEX_URL!
-);
+export const metadata: Metadata = {
+  title: "Realtime Quiz",
+  description: "Test your knowledge. Challenge others in real time.",
+};
 
 export default function RootLayout({
   children,
@@ -17,9 +15,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <ConvexProvider client={convex}>
+        <ConvexClientProvider>
           {children}
-        </ConvexProvider>
+        </ConvexClientProvider>
       </body>
     </html>
   );
