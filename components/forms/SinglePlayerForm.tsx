@@ -5,6 +5,7 @@ import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useRouter } from "next/navigation";
 import { generateQuestions } from "@/lib/generateQuestions";
+import toast from "react-hot-toast";
 
 interface Props {
   onBack: () => void;
@@ -20,8 +21,8 @@ export default function SinglePlayerForm({ onBack }: Props) {
   const [loading, setLoading] = useState(false);
 
   const handleStart = async () => {
-    if (!name.trim()) { alert("Enter your name"); return; }
-    if (!age || Number(age) < 5) { alert("Enter a valid age"); return; }
+    if (!name.trim()) { toast.error("Enter your name"); return; }
+    if (!age || Number(age) < 5) { toast.error("Enter a valid age (5+)"); return; }
 
     try {
       setLoading(true);
@@ -32,7 +33,7 @@ export default function SinglePlayerForm({ onBack }: Props) {
       router.push(`/quiz/${userId}`);
     } catch (err) {
       console.error(err);
-      alert("Something went wrong. Please try again.");
+      toast.error("Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }

@@ -5,6 +5,7 @@ import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useRouter } from "next/navigation";
 import { generateQuestions } from "@/lib/generateQuestions";
+import toast from "react-hot-toast";
 
 interface Props {
   onBack: () => void;
@@ -28,8 +29,8 @@ export default function MultiplayerForm({ onBack }: Props) {
   const [loading, setLoading] = useState(false);
 
   const handleCreate = async () => {
-    if (!name.trim()) { alert("Enter your name"); return; }
-    if (!age || Number(age) < 5) { alert("Enter a valid age"); return; }
+    if (!name.trim()) { toast.error("Enter your name"); return; }
+    if (!age || Number(age) < 5) { toast.error("Enter a valid age (5+)"); return; }
     try {
       setLoading(true);
       const userId = await createUser({ name, age: Number(age), mode: "multi" });
@@ -42,7 +43,7 @@ export default function MultiplayerForm({ onBack }: Props) {
       router.push(`/room/${code}`);
     } catch (err) {
       console.error(err);
-      alert("Something went wrong.");
+      toast.error("Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -50,9 +51,9 @@ export default function MultiplayerForm({ onBack }: Props) {
 
   const handleJoin = async (code: string) => {
     const c = code.trim().toUpperCase();
-    if (!c) { alert("Enter a room code"); return; }
-    if (!name.trim()) { alert("Enter your name"); return; }
-    if (!age || Number(age) < 5) { alert("Enter a valid age"); return; }
+    if (!c) { toast.error("Enter a room code"); return; }
+    if (!name.trim()) { toast.error("Enter your name"); return; }
+    if (!age || Number(age) < 5) { toast.error("Enter a valid age (5+)"); return; }
     try {
       setLoading(true);
       const userId = await createUser({ name, age: Number(age), mode: "multi" });
@@ -61,8 +62,8 @@ export default function MultiplayerForm({ onBack }: Props) {
       localStorage.setItem("quizRoomId", roomId);
       localStorage.setItem("quizRoomCode", c);
       router.push(`/room/${c}`);
-    } catch (err: any) {
-      alert(err.message || "Could not join room.");
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Could not join room.");
     } finally {
       setLoading(false);
     }
@@ -80,13 +81,13 @@ export default function MultiplayerForm({ onBack }: Props) {
             onClick={() => setStep("create")}
             className="w-full bg-purple-600 hover:bg-purple-700 transition-all p-4 rounded-xl font-semibold"
           >
-            🏠 Create a Room
+            Create a Room
           </button>
           <button
             onClick={() => setStep("join")}
             className="w-full bg-white/10 hover:bg-white/20 transition-all p-4 rounded-xl font-semibold"
           >
-            🚪 Join a Room
+            Join a Room
           </button>
         </div>
 
