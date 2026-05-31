@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import SinglePlayerForm from "@/components/forms/SinglePlayerForm";
 import MultiplayerForm from "@/components/forms/MultiplayerForm";
+import AuthButton from "@/components/auth/AuthButton";
 
 type Mode = "home" | "single" | "multi";
 
@@ -16,6 +17,11 @@ export default function HomeScreen() {
 
   return (
     <div className="w-full max-w-md text-white text-center">
+      {/* Auth bar — sits at the top right, non-intrusive */}
+      <div className="flex justify-end mb-6">
+        <AuthButton />
+      </div>
+
       <h1 className="text-4xl font-bold mb-2">Realtime Quiz</h1>
       <p className="text-white/50 mb-10">Test your knowledge. Challenge others.</p>
 
