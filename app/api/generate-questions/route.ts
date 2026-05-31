@@ -1,6 +1,8 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextResponse } from "next/server";
 
+export const dynamic = "force-dynamic";
+
 // Server-only — key is never sent to the browser
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
